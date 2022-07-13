@@ -1,4 +1,38 @@
 ###################
+# ECR
+###################
+resource "aws_ecr_repository" "demo-repository" {
+  name                 = "${var.ecr_name_prefix}-repo"
+  image_tag_mutability = "IMMUTABLE"
+}
+
+resource "aws_ecr_repository_policy" "demo-repo-policy" {
+  repository = aws_ecr_repository.demo-repository.name
+  policy     = jsonencode(
+    {
+      "Version": "2008-10-17",
+      "Statement": [
+        {
+          "Sid": "adds full ecr access to the demo repository",
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": [
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:BatchGetImage",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:GetLifecyclePolicy",
+            "ecr:InitiateLayerUpload",
+            "ecr:PutImage",
+            "ecr:UploadLayerPart"
+          ]
+        }
+      ]
+    }
+  )
+}
+
+###################
 # IAM Role for EKS Cluster
 ###################
 resource "aws_iam_role" "eks-cluster-role" {
@@ -99,12 +133,12 @@ resource "aws_eks_node_group" "worker-node-group" {
   node_group_name = "${var.project_name}-workernodes"
   node_role_arn  = aws_iam_role.eks-node-role.arn
   subnet_ids   =  module.vpc.private_subnets
-  instance_types = ["t3.xlarge"]
+  instance_types = [var.node_instance_type]
  
   scaling_config {
-    desired_size = 1
-    max_size   = 1
-    min_size   = 1
+    desired_size = var.node_desired_size
+    max_size   = var.node_max_size
+    min_size   = var.node_min_size
   }
  
   depends_on = [
