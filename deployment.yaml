@@ -1,0 +1,19 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: demo-deployment
+spec:
+  replicas: 1                   # How many copies of each pod do we want?
+  strategy:
+    type: Recreate              # How do want to update the pods ?
+  selector:                     # Which pods are managed by this deployment?
+    matchLabels:                # This must match the labels we set on the pod!
+      deploy: demo
+  template:                     # This template field is a regular pod configuration 
+    metadata:                      
+      labels:                   # Set labels on the pod, and this is used in the deployment selector.
+        deploy: demo
+    spec:
+      containers:
+        - name: demo
+          image: nginx:1.7.9
